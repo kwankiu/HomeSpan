@@ -242,6 +242,185 @@ struct SpanService{
 
 ///////////////////////////////
 
+template <class T>
+struct SpanNewCharacteristic {
+ 
+  int iid=0;                               // Instance ID (HAP Table 6-3)
+  const char *type;                        // Characteristic Type
+  const char *hapName;                     // HAP Name
+  T value;                                 // Characteristic Value - will always be the same as latestValue, except in update()
+  T latestValue;                           // the updated value requested by PUT /characteristic
+  uint8_t perms;                           // Characteristic Permissions
+  char *desc=NULL;                         // Characteristic Description (optional)
+  char *unit=NULL;                         // Characteristic Unit (optional)
+  T minValue;                              // Characteristic minimum (not applicable for STRING)
+  T maxValue;                              // Characteristic maximum (not applicable for STRING)
+  T stepValue;                             // Characteristic step size (not applicable for STRING)
+  boolean staticRange;                     // Flag that indicates whether Range is static and cannot be changed with setRange()
+  boolean customRange=false;               // Flag for custom ranges
+  const char *validValues=NULL;            // Optional JSON array of valid values.  Applicable only to uint8 Characteristics
+  boolean *ev;                             // Characteristic Event Notify Enable (per-connection)
+  char *nvsKey=NULL;                       // key for NVS storage of Characteristic value
+  
+  uint32_t aid=0;                          // Accessory ID - passed through from Service containing this Characteristic
+  boolean isUpdated=false;                 // set to true when new value has been requested by PUT /characteristic
+  unsigned long updateTime=0;              // last time value was updated (in millis) either by PUT /characteristic OR by setVal()
+  SpanService *service=NULL;               // pointer to Service containing this Characteristic   
+  
+//  int sprintfAttributes(char *cBuf, int flags);   // prints Characteristic JSON records into buf, according to flags mask; return number of characters printed, excluding null terminator  
+//  StatusCode loadUpdate(char *val, char *ev);     // load updated val/ev from PUT /characteristic JSON request.  Return intiial HAP status code (checks to see if characteristic is found, is writable, etc.)
+  
+//  boolean updated(){return(isUpdated);}           // returns isUpdated
+//  unsigned long timeVal();                        // returns time elapsed (in millis) since value was last updated
+  
+//  SpanNewCharacteristic *setValidValues(int n, ...);   // sets a list of 'n' valid values allowed for a Characteristic and returns pointer to self.  Only applicable if format=uint8
+
+  SpanNewCharacteristic(HapChar *hapChar){             // constructor (not template-specific)
+    type=hapChar->type;
+    perms=hapChar->perms;
+    hapName=hapChar->hapName;
+    staticRange=hapChar->staticRange;
+  
+    homeSpan.configLog+="      \u21e8 Characteristic " + String(hapName);
+  
+    if(homeSpan.Accessories.empty() || homeSpan.Accessories.back()->Services.empty()){
+      homeSpan.configLog+=" *** ERROR!  Can't create new Characteristic without a defined Service! ***\n";
+      homeSpan.nFatalErrors++;
+      return;
+    }
+  
+    iid=++(homeSpan.Accessories.back()->iidCount);
+    service=homeSpan.Accessories.back()->Services.back();
+    aid=homeSpan.Accessories.back()->aid;
+  
+    ev=(boolean *)calloc(homeSpan.maxConnections,sizeof(boolean));    
+  }
+  
+  SpanNewCharacteristic(T v, bool f){
+    value=v;
+    latestValue=v;
+  }
+
+  FORMAT vType(){
+    return(FORMAT::UNK);
+  }
+
+  operator T() const {         // auto conversion into a number, when used in context
+    return(latestValue);
+  }
+
+  T operator()() const {       // forces conversion in a number, regardless of context
+    return(latestValue);
+  }
+
+  void operator=(T v){
+    printf("In operator=\n");
+    value=v;
+    latestValue=v;
+  }
+
+  SpanNewCharacteristic& operator+=(T v){
+    value+=v;
+    latestValue+=v;
+    return(*this);
+  }
+
+  SpanNewCharacteristic& operator-=(T v){
+    value-=v;
+    latestValue-=v;
+    return(*this);
+  }
+  
+  SpanNewCharacteristic& operator*=(T v){
+    value*=v;
+    latestValue*=v;
+    return(*this);
+  }
+  
+  SpanNewCharacteristic& operator/=(T v){
+    value/=v;
+    latestValue/=v;
+    return(*this);
+  }
+  
+  SpanNewCharacteristic& operator%=(T v){
+    value%=v;
+    latestValue%=v;
+    return(*this);
+  }
+
+  SpanNewCharacteristic& operator^=(T v){
+    value^=v;
+    latestValue^=v;
+    return(*this);
+  }
+
+  SpanNewCharacteristic& operator|=(T v){
+    value|=v;
+    latestValue|=v;
+    return(*this);
+  }
+
+  SpanNewCharacteristic& operator&=(T v){
+    value&=v;
+    latestValue&=v;
+    return(*this);
+  }
+   
+  T operator++(){
+    ++value;
+    ++latestValue;
+    return(latestValue);
+  }
+  
+  T operator--(){
+    --value;
+    --latestValue;
+    return(latestValue);
+  }
+  
+  T operator++(int){
+    T v=latestValue;
+    ++value;
+    ++latestValue;
+    return(v);
+  }
+  
+  T operator--(int){
+    T v=latestValue;
+    --value;
+    --latestValue;
+    return(v);
+  }
+  
+  void print(){
+    switch(vType()){
+      case BOOL:
+      case UINT8:
+      case UINT16:
+      case UINT32:
+        printf("Value=%u\n",value);
+      break;
+      case UINT64:
+        printf("Value=%llu\n",value);
+      break;
+      case INT:
+        printf("Value=%d\n",value);
+      break;
+      case FLOAT:
+        printf("Value=%g\n",value);
+      break;
+      case STRING:
+        printf("Value='%s'\n",value);
+      break;
+       
+    }
+  }
+
+};
+
+///////////////////////////////
+
 struct SpanCharacteristic{
 
   union UVal {                                  
@@ -278,7 +457,7 @@ struct SpanCharacteristic{
   UVal newValue;                           // the updated value requested by PUT /characteristic
   SpanService *service=NULL;               // pointer to Service containing this Characteristic
       
-  SpanCharacteristic(HapChar *hapChar);           // contructor
+  SpanCharacteristic(HapChar *hapChar);           // constructor
   
   int sprintfAttributes(char *cBuf, int flags);   // prints Characteristic JSON records into buf, according to flags mask; return number of characters printed, excluding null terminator  
   StatusCode loadUpdate(char *val, char *ev);     // load updated val/ev from PUT /characteristic JSON request.  Return intiial HAP status code (checks to see if characteristic is found, is writable, etc.)

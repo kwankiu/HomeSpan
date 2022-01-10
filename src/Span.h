@@ -521,6 +521,17 @@ namespace Characteristic {
 
 }
 
+#pragma message("continue here - update macro to use new characteristic structure")
+
+#define CREATE_NEW_CHAR(TYPE,HAPCHAR,DEFVAL,MINVAL,MAXVAL) \
+  struct HAPCHAR : SpanCharacteristic { HAPCHAR(TYPE val=DEFVAL, boolean nvsStore=false) : SpanCharacteristic {&hapChars.HAPCHAR} { init(val,nvsStore,(TYPE)MINVAL,(TYPE)MAXVAL); } };
+  
+namespace NewCharacteristic {
+  
+  struct ON : SpanNewCharacteristic<bool> { using SpanNewCharacteristic::operator=; ON(bool v, bool f=false): SpanNewCharacteristic(v,f){} };
+  
+}
+
 //////////////////////////////////////////
 // MACRO TO ADD CUSTOM CHARACTERISTICS  //
 //////////////////////////////////////////

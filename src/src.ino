@@ -6,8 +6,8 @@
 
 #define STRING_t  const char *          // WORK-AROUND
 
-CUSTOM_CHAR(LightMode, AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA, PR, STRING, "ANY_VALUE", NULL, NULL, true);
-CUSTOM_CHAR_STRING(DarkMode, AAAAAAAA-BBBB-AAAA-AAAA-AAAAAAAAAAAA, PR, "MY_VALUE");
+//CUSTOM_CHAR(LightMode, AAAAAAAA-AAAA-AAAA-AAAA-AAAAAAAAAAAA, PR, STRING, "ANY_VALUE", NULL, NULL, true);
+//CUSTOM_CHAR_STRING(DarkMode, AAAAAAAA-BBBB-AAAA-AAAA-AAAAAAAAAAAA, PR, "MY_VALUE");
 
 void setup() {
  
@@ -48,9 +48,6 @@ void setup() {
 
     new Service::LightBulb();
       new Characteristic::On(0);
-      new Characteristic::LightMode("HELLO");
-      new Characteristic::DarkMode();
-      new Characteristic::DarkMode("OVERRIDE");
       new Characteristic::Brightness(50);
       new Characteristic::Name("Light 1");
       new Characteristic::ColorTemperature();

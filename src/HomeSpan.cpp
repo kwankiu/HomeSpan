@@ -1621,6 +1621,35 @@ SpanCharacteristic::SpanCharacteristic(HapChar *hapChar){
 
 ///////////////////////////////
 
+template <>
+SpanNewCharacteristic<char *>::SpanNewCharacteristic(char *v, bool f){
+  Serial.printf("SPECIAL CONSTRUCTOR\n");
+  value = (char *)malloc(strlen(v) + 1);
+  latestValue = (char *)malloc(strlen(v) + 1);
+  strcpy(value, v);
+  strcpy(latestValue, v);          
+}
+
+template <>
+void SpanNewCharacteristic<char *>::operator=(char *v){
+  Serial.printf("SPECIAL OP=\n");
+  value = (char *)realloc(value, strlen(v) + 1);
+  latestValue = (char *)realloc(latestValue, strlen(v) + 1);
+  strcpy(value, v);
+  strcpy(latestValue, v);          
+}
+
+template <> FORMAT SpanNewCharacteristic<boolean>::vType(){return(FORMAT::BOOL);}
+template <> FORMAT SpanNewCharacteristic<uint8_t>::vType(){return(FORMAT::UINT8);}
+template <> FORMAT SpanNewCharacteristic<uint16_t>::vType(){return(FORMAT::UINT16);}
+template <> FORMAT SpanNewCharacteristic<uint32_t>::vType(){return(FORMAT::UINT32);}
+template <> FORMAT SpanNewCharacteristic<uint64_t>::vType(){return(FORMAT::UINT64);}
+template <> FORMAT SpanNewCharacteristic<int>::vType(){return(FORMAT::INT);}
+template <> FORMAT SpanNewCharacteristic<double>::vType(){return(FORMAT::FLOAT);}
+template <> FORMAT SpanNewCharacteristic<char *>::vType(){return(FORMAT::STRING);}
+
+///////////////////////////////
+
 int SpanCharacteristic::sprintfAttributes(char *cBuf, int flags){
   int nBytes=0;
 
