@@ -67,6 +67,7 @@ struct Span;
 struct SpanAccessory;
 struct SpanService;
 struct SpanCharacteristic;
+template<class T> struct SpanNewCharacteristic;
 struct SpanRange;
 struct SpanBuf;
 struct SpanButton;
@@ -221,6 +222,7 @@ struct SpanService{
   boolean hidden=false;                                   // optional property indicating service is hidden
   boolean primary=false;                                  // optional property indicating service is primary
   vector<SpanCharacteristic *> Characteristics;           // vector of pointers to all Characteristics in this Service  
+  vector<SpanNewCharacteristic *> NewCharacteristics;           // vector of pointers to all Characteristics in this Service  
   vector<HapChar *> req;                                  // vector of pointers to all required HAP Characteristic Types for this Service
   vector<HapChar *> opt;                                  // vector of pointers to all optional HAP Characteristic Types for this Service
   vector<SpanService *> linkedServices;                   // vector of pointers to any optional linked Services
@@ -248,8 +250,8 @@ struct SpanNewCharacteristic {
   int iid=0;                               // Instance ID (HAP Table 6-3)
   const char *type;                        // Characteristic Type
   const char *hapName;                     // HAP Name
-  T value;                                 // Characteristic Value - will always be the same as latestValue, except in update()
-  T latestValue;                           // the updated value requested by PUT /characteristic
+  T value=0;                               // Characteristic Value - will always be the same as latestValue, except in update()
+  T latestValue=0;                         // the updated value requested by PUT /characteristic
   uint8_t perms;                           // Characteristic Permissions
   char *desc=NULL;                         // Characteristic Description (optional)
   char *unit=NULL;                         // Characteristic Unit (optional)
@@ -275,7 +277,9 @@ struct SpanNewCharacteristic {
   
 //  SpanNewCharacteristic *setValidValues(int n, ...);   // sets a list of 'n' valid values allowed for a Characteristic and returns pointer to self.  Only applicable if format=uint8
 
-  SpanNewCharacteristic(HapChar *hapChar){             // constructor (not template-specific)
+//--------------------
+
+  SpanNewCharacteristic(HapChar *hapChar, T val, boolean nvsStore, T min, T max){
     type=hapChar->type;
     perms=hapChar->perms;
     hapName=hapChar->hapName;
@@ -293,13 +297,89 @@ struct SpanNewCharacteristic {
     service=homeSpan.Accessories.back()->Services.back();
     aid=homeSpan.Accessories.back()->aid;
   
-    ev=(boolean *)calloc(homeSpan.maxConnections,sizeof(boolean));    
-  }
+    ev=(boolean *)calloc(homeSpan.maxConnections,sizeof(boolean));
+
+    int nvsFlag=0;
+    *this=val;
+    
+//    if(nvsStore){
+//      nvsKey=(char *)malloc(16);
+//      uint16_t t;
+//      sscanf(type,"%x",&t);
+//      sprintf(nvsKey,"%04X%08X%03X",t,aid,iid&0xFFF);
+//      size_t len;    
+//
+//      if(format != FORMAT::STRING){
+//        if(!nvs_get_blob(homeSpan.charNVS,nvsKey,NULL,&len)){
+//          nvs_get_blob(homeSpan.charNVS,nvsKey,&value,&len);          
+//          nvsFlag=2;
+//        }
+//        else {
+//          nvs_set_blob(homeSpan.charNVS,nvsKey,&value,sizeof(UVal));     // store data           
+//          nvs_commit(homeSpan.charNVS);                                    // commit to NVS  
+//          nvsFlag=1;
+//        }     
+//      } else {
+//        if(!nvs_get_str(homeSpan.charNVS,nvsKey,NULL,&len)){
+//          char c[len];
+//          nvs_get_str(homeSpan.charNVS,nvsKey,c,&len);                    
+//          uvSet(value,(const char *)c);
+//          nvsFlag=2;
+//        }
+//        else {
+//          nvs_set_str(homeSpan.charNVS,nvsKey,value.STRING);             // store string data
+//          nvs_commit(homeSpan.charNVS);                                    // commit to NVS  
+//          nvsFlag=1;
+//        }
+//      }
+//    }
+
+    minValue=min;     // these are not applicable for STRING, but setting values will not create an error provided min/max=0 (interpreted as NULL)
+    maxValue=max;
+    stepValue=0;
+
+    int x=0;
+    sscanf(type,"%*8[0-9a-fA-F]-%*4[0-9a-fA-F]-%*4[0-9a-fA-F]-%*4[0-9a-fA-F]-%*12[0-9a-fA-F]%n",&x);
+    
+    boolean isCustom=(strlen(type)==36 && x==36);
+
+    homeSpan.configLog+="(" + String(value) + ")" + ":  IID=" + String(iid) + ", " + (isCustom?"Custom-":"") + "UUID=\"" + String(type) + "\"";
+    if(vType()!=FORMAT::STRING && vType()!=FORMAT::BOOL)
+      homeSpan.configLog+= ", Range=[" + String(minValue) + "," + String(maxValue) + "]";
+
+    if(nvsFlag==2)
+      homeSpan.configLog+=" (restored)";
+    else if(nvsFlag==1)
+      homeSpan.configLog+=" (storing)";
+
+    boolean valid=isCustom;
   
-  SpanNewCharacteristic(T v, bool f){
-    value=v;
-    latestValue=v;
-  }
+    for(int i=0; !valid && i<homeSpan.Accessories.back()->Services.back()->req.size(); i++)
+      valid=!strcmp(type,homeSpan.Accessories.back()->Services.back()->req[i]->type);
+  
+    for(int i=0; !valid && i<homeSpan.Accessories.back()->Services.back()->opt.size(); i++)
+      valid=!strcmp(type,homeSpan.Accessories.back()->Services.back()->opt[i]->type);
+  
+    if(!valid){
+      homeSpan.configLog+=" *** WARNING!  Service does not support this Characteristic. ***";
+      homeSpan.nWarnings++;
+    }
+  
+    boolean repeated=false;
+    
+    for(int i=0; !repeated && i<homeSpan.Accessories.back()->Services.back()->Characteristics.size(); i++)
+      repeated=!strcmp(type,homeSpan.Accessories.back()->Services.back()->Characteristics[i]->type);
+    
+    if(valid && repeated){
+      homeSpan.configLog+=" *** ERROR!  Characteristic already defined for this Service. ***";
+      homeSpan.nFatalErrors++;
+    }
+  
+    homeSpan.Accessories.back()->Services.back()->NewCharacteristics.push_back(this);  
+  
+    homeSpan.configLog+="\n"; 
+   
+  } // constructor 
 
   FORMAT vType(){
     return(FORMAT::UNK);

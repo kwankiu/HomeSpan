@@ -521,14 +521,13 @@ namespace Characteristic {
 
 }
 
-#pragma message("continue here - update macro to use new characteristic structure")
-
 #define CREATE_NEW_CHAR(TYPE,HAPCHAR,DEFVAL,MINVAL,MAXVAL) \
   struct HAPCHAR : SpanCharacteristic { HAPCHAR(TYPE val=DEFVAL, boolean nvsStore=false) : SpanCharacteristic {&hapChars.HAPCHAR} { init(val,nvsStore,(TYPE)MINVAL,(TYPE)MAXVAL); } };
-  
+    
 namespace NewCharacteristic {
   
-  struct ON : SpanNewCharacteristic<bool> { using SpanNewCharacteristic::operator=; ON(bool v, bool f=false): SpanNewCharacteristic(v,f){} };
+  struct On : SpanNewCharacteristic<boolean> { using SpanNewCharacteristic::operator=; On(const boolean val=1, boolean nvsStore=false) : SpanNewCharacteristic(&hapChars.On,(boolean)val,nvsStore,0,1){} };
+  struct Name : SpanNewCharacteristic<char *> { using SpanNewCharacteristic::operator=; Name(const char * val="HELLO", boolean nvsStore=false) : SpanNewCharacteristic(&hapChars.Name,(char *)val,nvsStore,0,0){} };
   
 }
 

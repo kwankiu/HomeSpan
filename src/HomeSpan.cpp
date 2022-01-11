@@ -1622,15 +1622,6 @@ SpanCharacteristic::SpanCharacteristic(HapChar *hapChar){
 ///////////////////////////////
 
 template <>
-SpanNewCharacteristic<char *>::SpanNewCharacteristic(char *v, bool f){
-  Serial.printf("SPECIAL CONSTRUCTOR\n");
-  value = (char *)malloc(strlen(v) + 1);
-  latestValue = (char *)malloc(strlen(v) + 1);
-  strcpy(value, v);
-  strcpy(latestValue, v);          
-}
-
-template <>
 void SpanNewCharacteristic<char *>::operator=(char *v){
   Serial.printf("SPECIAL OP=\n");
   value = (char *)realloc(value, strlen(v) + 1);
