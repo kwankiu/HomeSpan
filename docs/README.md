@@ -1,5 +1,19 @@
 # Welcome!
 
+## This is a fork that is currently identical to HomeSpan/HomeSpan
+## I forked it because i would like to test and work on a few features
+## I will do this only on my free time, there is no priority which feature will come first and I might never have time to work on this, so dont expect anything.
+
+## Some Ideas/Thoughts :
+- Add support for OTA upload through a Web Server
+- Create a system log file and output all system logs to web log (useful if you do not have access to the Serial Monitor)
+- Print mac address and wifi channel if WifiApAdress is true (for ESP8266 ESPNOW)
+- Add ESP-32 HomeKit Camera support
+- Add support to use this library for ESP8266
+- Create a Web Dashboard
+- Support to control other Smart Home device (such as Tuya devices) and act as a bridge
+- Alternative control of accessories (eg Control then through a web dashboard or ESPNOW)
+
 Welcome to HomeSpan - a robust and extremely easy-to-use Arduino library for creating your own [ESP32-based](https://www.espressif.com/en/products/modules/esp32) HomeKit devices entirely within the [Arduino IDE](http://www.arduino.cc).
 
 HomeSpan provides a microcontroller-focused implementation of [Apple's HomeKit Accessory Protocol Specification Release R2 (HAP-R2)](https://developer.apple.com/homekit/specification/) designed specifically for the Espressif ESP32 microcontroller running within the Arduino IDE.  HomeSpan pairs directly to HomeKit via your home WiFi network without the need for any external bridges or components.  With HomeSpan you can use the full power of the ESP32's I/O functionality to create custom control software and/or hardware to automatically operate external devices from the Home App on your iPhone, iPad, or Mac, or with Siri.
