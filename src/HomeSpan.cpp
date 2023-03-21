@@ -432,6 +432,7 @@ void Span::checkConnect(){
   connected++;
 
   addWebLog(true,"WiFi Connected!  IP Address = %s",WiFi.localIP().toString().c_str());
+  addWebLog(true,"ESP-NOW (for ESP8266) MAC Address = %s",WiFi.softAPmacAddress().c_str()); //added for AP WiFi Address
 
   if(connected>1)                           // Do not initialize everything below if this is only a reconnect
     return;
@@ -570,6 +571,75 @@ void Span::setQRID(const char *id){
   }
     
 } // setQRID
+
+///////////////////////////////
+
+uint8_t* Span::getMacAddress() {
+
+  static uint8_t macaddr[6];
+  WiFi.macAddress(macaddr);
+  return macaddr;
+
+}
+
+const char* Span::getSerialNumber(int length, char prefix[], int prelen) {
+  // Allocate memory for the serial number
+  char* serialNum = (char*)malloc((length + 1) * sizeof(char));
+
+  // Retrieve the MAC address using the getMacAddress() function
+  uint8_t* macaddr = getMacAddress();
+
+  // Convert the MAC address to hexadecimal
+  char macStr[18];
+  sprintf(macStr, "%02X%02X%02X%02X%02X%02X", macaddr[3], macaddr[4], macaddr[5], macaddr[4], macaddr[3], macaddr[5]);
+
+  // Generate the serial number
+  int prevValue = 0;
+  int prefixLen = strlen(prefix);
+  for (int i = 0; i < length; i++) {
+    if (i < prefixLen) {
+      // Use the prefix character if available
+      serialNum[i] = prefix[i];
+    } else if (i < prelen) {
+      // Use A-F for the first four characters if no prefix is specified
+      serialNum[i] = (char)('A' + (macStr[i - prefixLen] % 6));
+    } else {
+      // Generate the remaining characters using the previous value
+      int value = (prevValue * 2 + macStr[i - prefixLen]) % 36;
+      prevValue = value;
+      if (value < 10) {
+        serialNum[i] = (char)('0' + value);
+      } else {
+        serialNum[i] = (char)('A' + (value - 10));
+      }
+    }
+  }
+
+  // Add null terminator to the end of the char array
+  serialNum[length] = '\0';
+
+  return serialNum;
+}
+
+const char* Span::getDeviceSetupCode() {
+  // Retrieve the MAC address using the getMacAddress() function
+  uint8_t* macaddr = getMacAddress();
+
+  // Combine the last 3 bytes of the MAC address into a 24-bit integer
+  uint32_t macInt = ((uint32_t)macaddr[3] << 16) | ((uint32_t)macaddr[4] << 8) | (uint32_t)macaddr[5];
+
+  // Convert the 24-bit integer to an 8-digit decimal number as a string
+  static char pairCodeStr[9];
+  snprintf(pairCodeStr, sizeof(pairCodeStr), "%08lu", macInt % 100000000);
+
+  return pairCodeStr;
+}
+
+String Span::getQRCode(char* pairCode) {
+  char* qrcode = qrCode.get(atoi(pairCode),qrID,atoi(category));
+  String result = qrcode;
+  return result;
+}
 
 ///////////////////////////////
 
