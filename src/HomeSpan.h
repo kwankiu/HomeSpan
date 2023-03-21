@@ -286,7 +286,12 @@ class Span{
              
   void poll();                                  // calls pollTask() with some error checking
   void processSerialCommand(const char *c);     // process command 'c' (typically from readSerial, though can be called with any 'c')
-  
+
+  uint8_t* getMacAddress();                                                         // get WiFi MAC Address
+  const char* getSerialNumber(int length = 10, char prefix[] = "", int prelen = 4); // get a Serial Number by obtain and formatting from MAC Address
+  const char* getDeviceSetupCode();                                                 // get a HomeKit Setup Code by obtain and formatting from MAC Address
+  String getQRCode(char* pairCode); // get a String to be used for HomeKit QRCode
+
   boolean updateDatabase(boolean updateMDNS=true);   // updates HAP Configuration Number and Loop vector; if updateMDNS=true and config number has changed, re-broadcasts MDNS 'c#' record; returns true if config number changed
   boolean deleteAccessory(uint32_t aid);             // deletes Accessory with matching aid; returns true if found, else returns false 
 
