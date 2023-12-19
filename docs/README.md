@@ -1,6 +1,6 @@
 # Welcome!
 
-## This is a fork that is currently identical to HomeSpan/HomeSpan
+## This is a fork that was modified for [DashHome](https://github.com/DashHome/DashHome)
 ## I forked it because i would like to test and work on a few features
 ## I will do this only on my free time, there is no priority which feature will come first and I might never have time to work on this, so dont expect anything.
 
@@ -10,8 +10,8 @@
 - Print mac address and wifi channel if WifiApAdress is true (for ESP8266 ESPNOW)
 - Add ESP-32 HomeKit Camera support
 - Add support to use this library for ESP8266
-- Create a Web Dashboard
-- Support to control other Smart Home device (such as Tuya devices) and act as a bridge
+- Create a Web Dashboard (Check out my another project [DashHome](https://github.com/DashHome/DashHome))
+- Support to control other Smart Home device (such as Tuya devices) and act as a bridge (Check out my another project [DashHome](https://github.com/DashHome/DashHome))
 - Alternative control of accessories (eg Control then through a web dashboard or ESPNOW)
 
 Welcome to HomeSpan - a robust and extremely easy-to-use Arduino library for creating your own [ESP32-based](https://www.espressif.com/en/products/modules/esp32) HomeKit devices entirely within the [Arduino IDE](http://www.arduino.cc).
